@@ -1,0 +1,15 @@
+# Customer data - never commit
+*.xlsx
+*.xls
+*.csv
+*.parquet
+snap/
+
+# Local Snowflake credentials
+.streamlit/secrets.toml
+
+# Python / OS
+__pycache__/
+*.pyc
+.venv/
+.DS_Store

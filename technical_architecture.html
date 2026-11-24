@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { width: 1800px; height: 860px; font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; background: #F4F7FB; color: #1B2A3A; padding: 32px 44px; }
+  .hdr { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 18px; }
+  .hdr h1 { font-size: 34px; font-weight: 800; color: #11567F; }
+  .hdr p { font-size: 17px; color: #4A5B6E; margin-top: 6px; }
+  .legend { display: flex; gap: 14px; font-size: 13.5px; align-items: center; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+  .main { display: flex; gap: 14px; align-items: stretch; }
+  .src { width: 190px; display: flex; flex-direction: column; gap: 10px; }
+  .lane-title { font-size: 13px; font-weight: 800; letter-spacing: .6px; color: #5B6E82; text-transform: uppercase; margin-bottom: 4px; }
+  .box { background: #fff; border: 1.5px solid #CFE2F0; border-radius: 12px; padding: 10px 12px; font-size: 13px; line-height: 1.4; }
+  .box b { display: block; font-size: 14.5px; color: #11567F; margin-bottom: 3px; }
+  .prod { border-style: dashed; border-color: #A98BCB; background: #FBF8FE; }
+  .prod b { color: #7A3FB0; }
+  .sf { flex: 1; border: 3px solid #29B5E8; border-radius: 20px; background: #fff; padding: 34px 16px 16px; position: relative; }
+  .sf .tag { position: absolute; top: -17px; left: 24px; background: #29B5E8; color: #fff; font-weight: 700; padding: 6px 16px; border-radius: 16px; font-size: 15px; }
+  .layers { display: flex; gap: 0; align-items: stretch; }
+  .layer { flex: 1; background: #F8FBFE; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 8px; border: 1.5px solid #DCE8F2; }
+  .layer.ai { background: #FFF8EC; border-color: #F2B544; }
+  .layer.ai .lane-title { color: #A86A00; }
+  .layer.serve { background: #EEF9F2; border-color: #7CCB9A; }
+  .layer.serve .lane-title { color: #1F7A45; }
+  .obj { font-family: Menlo, Consolas, monospace; font-size: 11.5px; background: #1B2A3A; color: #9FE3FF; border-radius: 5px; padding: 3px 6px; margin: 2px 0; display: inline-block; }
+  .ai .box b { color: #A86A00; } .serve .box b { color: #1F7A45; }
+  .ar { width: 26px; display: flex; align-items: center; justify-content: center; color: #29B5E8; font-size: 28px; font-weight: 900; }
+  .cross { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 14px; }
+  .cbox { background: #EEF2F7; border-radius: 12px; padding: 10px 14px; font-size: 12.8px; line-height: 1.45; border: 1px solid #D5DEE8; }
+  .cbox b { display: block; font-size: 14px; color: #11567F; margin-bottom: 3px; }
+  .users { width: 190px; display: flex; flex-direction: column; gap: 10px; }
+  .foot { margin-top: 14px; font-size: 13px; color: #6A7C8F; display: flex; justify-content: space-between; }
+  .note { font-size: 12px; color: #6A7C8F; margin-top: 2px; }
+</style></head>
+<body>
+  <div class="hdr">
+    <div>
+      <h1>Technical Architecture: AI Survey Feedback Analysis</h1>
+      <p>Single Snowflake platform: storage, AI (Cortex), orchestration, governance and app serving</p>
+    </div>
+    <div class="legend">
+      <span><i class="dot" style="background:#fff;border:1.5px solid #CFE2F0"></i>Prototype (built)</span>
+      <span><i class="dot" style="background:#FBF8FE;border:1.5px dashed #A98BCB"></i>Production add-on</span>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- SOURCES -->
+    <div class="src">
+      <div class="lane-title">Sources</div>
+      <div class="box"><b>Survey platform</b>Custom form → responses already in Snowflake (~15 lakh / yr)</div>
+      <div class="box"><b>Theme glossary</b>Hashtag → theme → dimension, GPTW statements</div>
+      <div class="box prod"><b>Company master</b>Industry, employee size, region</div>
+      <div class="box prod"><b>Trust Index scores</b>60 statement ratings, to join with comment themes</div>
+    </div>
+    <div class="ar">›</div>
+
+    <!-- SNOWFLAKE -->
+    <div class="sf">
+      <div class="tag">SNOWFLAKE ACCOUNT · security boundary, no external AI services</div>
+      <div class="layers">
+        <div class="layer">
+          <div class="lane-title">1 · Ingest &amp; prepare</div>
+          <div class="box"><b>Raw layer</b><span class="obj">RAW_RESPONSES</span><span class="obj">THEME_GLOSSARY</span></div>
+          <div class="box"><b>Unpivot &amp; clean</b><span class="obj">COMMENTS</span><br>1 row per answer · drop blanks</div>
+          <div class="box prod"><b>Process only new comments</b>Stream on raw table → scheduled task</div>
+          <div class="box prod"><b>Pre-filter</b>Rules + AI_FILTER (noise) · AI_TRANSLATE (multilingual) · AI_REDACT (personal details)</div>
+        </div>
+        <div class="ar">›</div>
+        <div class="layer ai">
+          <div class="lane-title">2 · Cortex AI enrichment</div>
+          <div class="box"><b>AI_COMPLETE (claude-sonnet-4-5)</b>Zero-shot, glossary in prompt · temp 0 · <u>output locked to a fixed JSON format</u> (51-hashtag list)</div>
+          <div class="box"><b>Output per comment</b>themes[ ] · sentiment per theme · evidence · overall score · risk flag · summary<br><span class="obj">COMMENTS_ENRICHED</span></div>
+          <div class="box"><b>Baseline</b>AI_CLASSIFY (multi) · AI_SENTIMENT</div>
+          <div class="box prod"><b>Theme discovery</b>AI_EMBED + clustering on #NonSpecific comments</div>
+        </div>
+        <div class="ar">›</div>
+        <div class="layer">
+          <div class="lane-title">3 · Analytics model</div>
+          <div class="box"><b>Theme rows (flattened)</b><span class="obj">COMMENT_THEMES</span><br>1 row per theme mention + demographics</div>
+          <div class="box"><b>Typed views</b><span class="obj">V_COMMENTS</span><span class="obj">V_THEME_HEALTH</span><br>Prevalence % · net sentiment · lift</div>
+          <div class="box prod"><b>Semantic view</b>Metrics &amp; dimensions for Cortex Analyst</div>
+          <div class="box prod"><b>Cortex Search service</b>Over comment text + evidence</div>
+        </div>
+        <div class="ar">›</div>
+        <div class="layer serve">
+          <div class="lane-title">4 · Serve</div>
+          <div class="box"><b>Streamlit in Snowflake</b>Container runtime · compute pool · warehouse<br>Overview · Themes · Demographics · Risk radar · Comments</div>
+          <div class="box"><b>Brief &amp; chat (live AI)</b>Filtered summary → AI_COMPLETE, using only the filtered data</div>
+          <div class="box prod"><b>Cortex Agent / Snowflake Intelligence</b>Analyst (exact numbers) + Search (quotes)</div>
+          <div class="box prod"><b>Exports</b>Case studies, decks, client reports</div>
+        </div>
+      </div>
+
+      <div class="cross">
+        <div class="cbox"><b>Compute</b>GPTW_WH warehouse (XS pilot, auto-suspend 60s) · larger during Oct–Feb peak · compute pool for app</div>
+        <div class="cbox"><b>Governance &amp; security</b>Role-based access to data &amp; app · <i>prod:</i> masking policies on demographics · row access per client, hide groups under ~5, tags, access history</div>
+        <div class="cbox"><b>Quality &amp; versioning</b><i>prod:</i> reference set vs analyst coding · prompt / model / glossary version per row · human override table · drift monitoring</div>
+        <div class="cbox"><b>Operations &amp; cost</b><i>prod:</i> budgets &amp; resource monitors · Cortex usage history · task alerts · failed-row retry · dev/test/prod + Git CI/CD</div>
+      </div>
+    </div>
+    <div class="ar">›</div>
+
+    <!-- USERS -->
+    <div class="users">
+      <div class="lane-title">Consumers</div>
+      <div class="box"><b>GPTW consultants</b>Client facilitation, theme insights</div>
+      <div class="box"><b>Leadership / clients</b>AI leadership briefs, risk watch-list</div>
+      <div class="box"><b>Marketing &amp; sales</b>Content, case studies, lead generation</div>
+      <div class="box"><b>Access</b>Snowsight login · Snowflake roles (e.g. GPTW_ANALYST)</div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>Cost: AI runs once per comment (batch) · dashboards reuse the stored results · brief &amp; chat cost AI per request</span>
+    <span>Snowflake · AI Survey Feedback Analysis prototype</span>
+  </div>
+</body></html>
